@@ -32,4 +32,4 @@ docs/week09/              rapor sayfası, grafikler, deney verisi
 tools/                    grafik ve animasyon scriptleri (Python)
 ```
 
-Her hafta ayrı bir `feature/...` dalında geliştirilir ve Pull Request ile `main` dalına birleştirilir.
+Her 'feature/...` dalında geliştirilir ve Pull Request ile `main` dalına birleştirilir.
