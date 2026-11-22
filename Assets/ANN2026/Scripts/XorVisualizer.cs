@@ -9,12 +9,12 @@ using UnityEngine;
 /// Trains its own network a few epochs per frame and draws what it answers for every point of the
 /// input square [0,1] x [0,1]: blue = 1, orange = 0, grey = undecided. The four training points are
 /// drawn on top, so the viewer can watch the network carve out the XOR regions.
-/// Command line (build): -seed 3  -recordFrames &lt;dir&gt;  -recordCount 300
+/// Command line (build): -seed 10  -recordFrames &lt;dir&gt;  -recordCount 300
 /// </summary>
 public class XorVisualizer : MonoBehaviour
 {
     public Gate gate = Gate.XOR;
-    public int seed = 3;
+    public int seed = 10;
     public double alpha = 0.8;
     [Min(1)] public int epochsPerFrame = 4;
     [Min(1)] public int maxEpochs = 1000;
