@@ -19,6 +19,8 @@ public class Brain : MonoBehaviour {
     [Tooltip("Training rate. The lecture uses 0.8; with 0.1 training is not finished after 1000 epochs.")]
     public double alpha = 0.8;
     [Min(1)] public int epochs = 1000;
+    [Tooltip("Seeds the random initial weights so a run can be repeated; 0 = different every time.")]
+    public int seed = 10;
 
     ANN ann;
     double sumSquareError = 0;
@@ -47,6 +49,7 @@ public class Brain : MonoBehaviour {
     }
 
     void Start () {
+        if (seed != 0) Random.InitState(seed);
         ann = new ANN(2, 1, hiddenLayers, neuronsPerHiddenLayer, alpha)
         {
             hiddenActivation = hiddenActivation,
@@ -58,7 +61,7 @@ public class Brain : MonoBehaviour {
         {
             sumSquareError = TrainEpoch(ann, set);
         }
-        Debug.Log(gate + " SSE: " + sumSquareError);
+        Debug.Log(gate + " SSE: " + sumSquareError + (seed != 0 ? "  (seed " + seed + ")" : ""));
 
         foreach (double[] row in set)
         {
