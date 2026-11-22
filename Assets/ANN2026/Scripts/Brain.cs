@@ -2,42 +2,73 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum Gate { XOR, XNOR }
+
 public class Brain : MonoBehaviour {
+
+    [Header("Training set")]
+    public Gate gate = Gate.XOR;
+
+    [Header("Network (2 inputs, 1 output)")]
+    [Min(0)] public int hiddenLayers = 1;
+    [Min(1)] public int neuronsPerHiddenLayer = 2;
+    public Activation hiddenActivation = Activation.Sigmoid;
+    public Activation outputActivation = Activation.Sigmoid;
+
+    [Header("Training")]
+    [Tooltip("Training rate. The lecture uses 0.8; with 0.1 training is not finished after 1000 epochs.")]
+    public double alpha = 0.8;
+    [Min(1)] public int epochs = 1000;
 
     ANN ann;
     double sumSquareError = 0;
 
-    void Start () {
-        // 2 inputs, 1 output, 1 hidden layer with 2 neurons, alpha (training rate) 0.8
-        ann = new ANN(2, 1, 1, 2, 0.8);
-
-        List<double> result;
-
-        for(int i = 0; i < 1000; i++)
+    /// <summary>The four rows {input1, input2, output} in the order the lecture trains them.</summary>
+    public static double[][] TrainingSet(Gate gate)
+    {
+        double same = gate == Gate.XOR ? 0 : 1;   // XOR: 1 when inputs differ; XNOR: 1 when they are equal
+        return new[]
         {
-            sumSquareError = 0;
-            result = Train(1, 1, 0);
-            sumSquareError += Mathf.Pow((float)result[0] - 0, 2);
-            result = Train(1, 0, 1);
-            sumSquareError += Mathf.Pow((float)result[0] - 1, 2);
-            result = Train(0, 1, 1);
-            sumSquareError += Mathf.Pow((float)result[0] - 1, 2);
-            result = Train(0, 0, 0);
-            sumSquareError += Mathf.Pow((float)result[0] - 0, 2);
-        }
-        Debug.Log("SSE: " + sumSquareError);
-
-        result = Train(1, 1, 0);
-        Debug.Log(" 1 1 " + result[0]);
-        result = Train(1, 0, 1);
-        Debug.Log(" 1 0 " + result[0]);
-        result = Train(0, 1, 1);
-        Debug.Log(" 0 1 " + result[0]);
-        result = Train(0, 0, 0);
-        Debug.Log(" 0 0 " + result[0]);
+            new double[] { 1, 1, same }, new double[] { 1, 0, 1 - same },
+            new double[] { 0, 1, 1 - same }, new double[] { 0, 0, same },
+        };
     }
 
-    List<double> Train(double i1, double i2, double o)
+    /// <summary>One epoch: every row once through ANN.Run (which also updates the weights). Returns the sum of squared errors.</summary>
+    public static double TrainEpoch(ANN ann, double[][] set)
+    {
+        double sse = 0;
+        foreach (double[] row in set)
+        {
+            List<double> result = Train(ann, row[0], row[1], row[2]);
+            sse += Mathf.Pow((float)result[0] - (float)row[2], 2);
+        }
+        return sse;
+    }
+
+    void Start () {
+        ann = new ANN(2, 1, hiddenLayers, neuronsPerHiddenLayer, alpha)
+        {
+            hiddenActivation = hiddenActivation,
+            outputActivation = outputActivation,
+        };
+        double[][] set = TrainingSet(gate);
+
+        for(int i = 0; i < epochs; i++)
+        {
+            sumSquareError = TrainEpoch(ann, set);
+        }
+        Debug.Log(gate + " SSE: " + sumSquareError);
+
+        foreach (double[] row in set)
+        {
+            List<double> result = ann.Run(new List<double> { row[0], row[1] }, new List<double> { row[2] }, false);
+            Debug.Log(" " + row[0] + " " + row[1] + " " + result[0].ToString("0.0000") +
+                      "  -> " + System.Math.Round(result[0]) + " (expected " + row[2] + ")");
+        }
+    }
+
+    static List<double> Train(ANN ann, double i1, double i2, double o)
     {
         List<double> inputs = new List<double>();
         List<double> outputs = new List<double>();
